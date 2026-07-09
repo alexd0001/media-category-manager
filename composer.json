@@ -1,0 +1,12 @@
+{
+  "name": "waldorfshop/media-category-manager",
+  "description": "Folder-like media category management for WordPress attachments.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "MediaCategoryManager\\": "includes/"
+    }
+  },
+  "require": {}
+}
