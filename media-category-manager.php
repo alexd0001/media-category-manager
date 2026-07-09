@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Media Category Manager
  * Description: Folder-like media category management for WordPress attachments.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Author: Waldorfshop.eu / Kreativkombinat
  * License: GPL-2.0-or-later
  * Text Domain: media-category-manager
