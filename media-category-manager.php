@@ -6,6 +6,7 @@
  * Author: Waldorfshop.eu / Kreativkombinat
  * License: GPL-2.0-or-later
  * Text Domain: media-category-manager
+ * Update URI: media-category-manager
  */
 
 if (!defined('ABSPATH')) {
@@ -20,6 +21,7 @@ define('MCM_PLUGIN_URL', plugin_dir_url(__FILE__));
 require_once MCM_PLUGIN_DIR . 'includes/Settings.php';
 require_once MCM_PLUGIN_DIR . 'includes/Helpers.php';
 require_once MCM_PLUGIN_DIR . 'includes/Taxonomies.php';
+require_once MCM_PLUGIN_DIR . 'includes/GitHubUpdater.php';
 require_once MCM_PLUGIN_DIR . 'includes/Compatibility/Divi.php';
 require_once MCM_PLUGIN_DIR . 'includes/Compatibility/Gutenberg.php';
 require_once MCM_PLUGIN_DIR . 'includes/Compatibility/MLA.php';

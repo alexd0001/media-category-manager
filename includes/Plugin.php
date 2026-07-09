@@ -20,6 +20,7 @@ final class Plugin
 {
     private static ?self $instance = null;
     private Taxonomies $taxonomies;
+    private GitHubUpdater $updater;
 
     public static function instance(): self
     {
@@ -32,8 +33,12 @@ final class Plugin
 
     public function boot(): void
     {
+        Settings::hooks();
+
         $this->taxonomies = new Taxonomies();
         $this->taxonomies->hooks();
+        $this->updater = new GitHubUpdater(MCM_PLUGIN_FILE);
+        $this->updater->hooks();
 
         if (!is_admin()) {
             return;
