@@ -128,13 +128,16 @@ final class GitHubUpdater
             }
         }
 
-        $renamed = @rename($source, $target);
+        $renamed = $this->move_source_to_target($source, $target);
 
         if ($renamed) {
             return $target;
         }
 
-        return $source;
+        return new \WP_Error(
+            'mcm_update_move_failed',
+            __('The update package could not be moved into the plugin directory.', 'media-category-manager')
+        );
     }
 
     public function maybe_add_github_headers(array $args, string $url): array
@@ -247,5 +250,28 @@ final class GitHubUpdater
         }
 
         return trim($matches[1]);
+    }
+
+    private function move_source_to_target(string $source, string $target): bool
+    {
+        if (@rename($source, $target)) {
+            return true;
+        }
+
+        if (function_exists('move_dir')) {
+            $result = move_dir($source, $target, true);
+
+            if (!is_wp_error($result)) {
+                return true;
+            }
+        }
+
+        global $wp_filesystem;
+
+        if ($wp_filesystem && method_exists($wp_filesystem, 'move') && $wp_filesystem->move($source, $target, true)) {
+            return true;
+        }
+
+        return false;
     }
 }
