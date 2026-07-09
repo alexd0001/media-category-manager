@@ -8,5 +8,7 @@ if (!defined('ABSPATH')) {
 
 final class Divi
 {
-    // TODO
+    public function hooks(): void
+    {
+    }
 }

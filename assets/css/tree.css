@@ -1,0 +1,56 @@
+.mcm-tree-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mcm-tree-item {
+    margin: 0;
+    padding: 0;
+}
+
+.mcm-tree-item > .mcm-tree-link,
+.mcm-tree-item > .mcm-tree-toggle,
+.mcm-tree-item > .mcm-tree-toggle-placeholder {
+    vertical-align: middle;
+}
+
+.mcm-tree-link {
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 28px);
+    padding: 6px 8px;
+    border-radius: 6px;
+    color: #1d2327;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.mcm-tree-link:hover,
+.mcm-tree-link.is-active {
+    background: #eef4ff;
+    color: #135e96;
+}
+
+.mcm-tree-link .count {
+    color: #646970;
+    font-size: 11px;
+}
+
+.mcm-tree-toggle,
+.mcm-tree-toggle-placeholder {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: transparent;
+    color: #646970;
+    cursor: pointer;
+}
+
+.mcm-tree-children {
+    padding-left: 18px;
+}

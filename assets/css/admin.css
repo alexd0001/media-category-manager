@@ -1,0 +1,98 @@
+.mcm-layout {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+}
+
+.mcm-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.mcm-sidebar {
+    width: 280px;
+    flex: 0 0 280px;
+    position: sticky;
+    top: 46px;
+}
+
+.mcm-panel {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+
+.mcm-panel h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.mcm-search,
+.mcm-multiselect {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mcm-multiselect {
+    min-height: 120px;
+    margin-bottom: 12px;
+}
+
+.mcm-bulk-panel .button {
+    width: 100%;
+}
+
+.mcm-bulk-status {
+    min-height: 20px;
+    margin: 12px 0 0;
+}
+
+.mcm-badge {
+    display: inline-block;
+    margin: 0 6px 6px 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e7f0ff;
+    color: #1d4f91;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.mcm-badge-empty {
+    background: #f3f4f6;
+    color: #50575e;
+}
+
+.mcm-list-badges {
+    max-width: 280px;
+}
+
+.mcm-grid-badges {
+    padding: 6px 8px 0;
+}
+
+.mcm-quick-edit-list {
+    max-height: 160px;
+    overflow: auto;
+    margin-top: 8px;
+}
+
+.mcm-quick-edit-list label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 1200px) {
+    .mcm-layout {
+        flex-direction: column;
+    }
+
+    .mcm-sidebar {
+        width: 100%;
+        position: static;
+    }
+}

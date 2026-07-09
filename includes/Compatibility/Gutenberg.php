@@ -8,5 +8,7 @@ if (!defined('ABSPATH')) {
 
 final class Gutenberg
 {
-    // TODO
+    public function hooks(): void
+    {
+    }
 }

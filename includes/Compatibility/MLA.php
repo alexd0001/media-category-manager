@@ -8,5 +8,7 @@ if (!defined('ABSPATH')) {
 
 final class MLA
 {
-    // TODO
+    public function hooks(): void
+    {
+    }
 }

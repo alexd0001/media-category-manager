@@ -8,5 +8,7 @@ if (!defined('ABSPATH')) {
 
 final class ACF
 {
-    // TODO
+    public function hooks(): void
+    {
+    }
 }
