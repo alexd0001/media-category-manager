@@ -110,10 +110,11 @@ final class GitHubUpdater
 
     public function normalize_extracted_directory($source, $remote_source, $upgrader, $hook_extra)
     {
-        if (empty($hook_extra['plugin']) || $hook_extra['plugin'] !== $this->plugin_basename) {
+        if (!$this->matches_update_context((array) $hook_extra)) {
             return $source;
         }
 
+        $source = $this->locate_plugin_source_directory((string) $source);
         $target = trailingslashit(dirname($source)) . $this->plugin_slug;
 
         if ($source === $target) {
@@ -241,6 +242,27 @@ final class GitHubUpdater
         );
     }
 
+    private function matches_update_context(array $hook_extra): bool
+    {
+        if (!empty($hook_extra['plugin']) && $hook_extra['plugin'] === $this->plugin_basename) {
+            return true;
+        }
+
+        if (empty($hook_extra['package']) || !is_string($hook_extra['package'])) {
+            return false;
+        }
+
+        $repo = $this->parse_repository((string) Settings::get('github_repository'));
+
+        if (!$repo) {
+            return false;
+        }
+
+        $expected = 'https://codeload.github.com/' . $repo['owner'] . '/' . $repo['repo'] . '/zip/refs/heads/';
+
+        return 0 === strpos($hook_extra['package'], $expected);
+    }
+
     private function parse_plugin_header(string $contents, string $field): ?string
     {
         $pattern = '/^[ \t\/*#@]*' . preg_quote($field, '/') . ':\s*(.+)$/mi';
@@ -250,6 +272,29 @@ final class GitHubUpdater
         }
 
         return trim($matches[1]);
+    }
+
+    private function locate_plugin_source_directory(string $source): string
+    {
+        $main_file = trailingslashit($source) . $this->plugin_main_file;
+
+        if (is_file($main_file)) {
+            return $source;
+        }
+
+        $directories = glob(trailingslashit($source) . '*', GLOB_ONLYDIR);
+
+        if (empty($directories)) {
+            return $source;
+        }
+
+        foreach ($directories as $directory) {
+            if (is_file(trailingslashit($directory) . $this->plugin_main_file)) {
+                return untrailingslashit($directory);
+            }
+        }
+
+        return $source;
     }
 
     private function move_source_to_target(string $source, string $target): bool
