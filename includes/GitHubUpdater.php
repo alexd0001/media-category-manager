@@ -38,6 +38,7 @@ final class GitHubUpdater
     {
         add_filter('pre_set_site_transient_update_plugins', array($this, 'inject_update'));
         add_filter('plugins_api', array($this, 'plugins_api'), 10, 3);
+        add_filter('upgrader_package_options', array($this, 'filter_upgrader_package_options'));
         add_filter('upgrader_source_selection', array($this, 'normalize_extracted_directory'), 10, 4);
         add_filter('http_request_args', array($this, 'maybe_add_github_headers'), 10, 2);
     }
@@ -139,6 +140,21 @@ final class GitHubUpdater
             'mcm_update_move_failed',
             __('The update package could not be moved into the plugin directory.', 'media-category-manager')
         );
+    }
+
+    public function filter_upgrader_package_options(array $options): array
+    {
+        $hook_extra = $options['hook_extra'] ?? array();
+
+        if (!$this->matches_update_context(is_array($hook_extra) ? $hook_extra : array())) {
+            return $options;
+        }
+
+        if (!empty($options['hook_extra']['temp_backup'])) {
+            unset($options['hook_extra']['temp_backup']);
+        }
+
+        return $options;
     }
 
     public function maybe_add_github_headers(array $args, string $url): array
