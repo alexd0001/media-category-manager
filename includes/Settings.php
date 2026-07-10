@@ -12,6 +12,7 @@ final class Settings
     public const SETTINGS_GROUP = 'mcm_settings_group';
     public const SETTINGS_PAGE = 'mcm-settings';
     public const SETTINGS_CAPABILITY = 'manage_options';
+    public const CLEAR_CACHE_ACTION = 'mcm_clear_update_cache';
 
     public const TAXONOMY_CATEGORY = 'attachment_category';
     public const TAXONOMY_TAG = 'attachment_tag';
@@ -36,6 +37,7 @@ final class Settings
     public static function hooks(): void
     {
         add_action('admin_init', array(__CLASS__, 'register'));
+        add_action('admin_init', array(__CLASS__, 'handle_clear_cache'));
         add_action('admin_menu', array(__CLASS__, 'add_settings_page'));
         add_action('update_option_' . self::OPTION_KEY, array(__CLASS__, 'flush_update_cache'), 10, 2);
     }
@@ -97,10 +99,24 @@ final class Settings
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__('Media Category Manager', 'media-category-manager') . '</h1>';
+
+        if (!empty($_GET['mcm_cache_cleared'])) {
+            echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Update cache cleared.', 'media-category-manager') . '</p></div>';
+        }
+
         echo '<form action="options.php" method="post">';
         settings_fields(self::SETTINGS_GROUP);
         do_settings_sections(self::SETTINGS_PAGE);
         submit_button();
+        echo '</form>';
+
+        echo '<hr>';
+        echo '<h2>' . esc_html__('Maintenance', 'media-category-manager') . '</h2>';
+        echo '<p>' . esc_html__('If WordPress shows an outdated plugin version, clear the cached update data and run a fresh check.', 'media-category-manager') . '</p>';
+        echo '<form method="post" action="' . esc_url(admin_url('options-general.php?page=' . self::SETTINGS_PAGE)) . '">';
+        wp_nonce_field(self::CLEAR_CACHE_ACTION);
+        echo '<input type="hidden" name="mcm_action" value="clear_update_cache">';
+        submit_button(__('Clear Update Cache', 'media-category-manager'), 'secondary', 'submit', false);
         echo '</form>';
         echo '</div>';
     }
@@ -144,6 +160,38 @@ final class Settings
         delete_site_transient(GitHubUpdater::cache_key());
         delete_site_transient(GitHubUpdater::cache_key_for_settings((array) $old_value));
         delete_site_transient(GitHubUpdater::cache_key_for_settings((array) $value));
+        delete_site_transient('update_plugins');
+    }
+
+    public static function handle_clear_cache(): void
+    {
+        if (!is_admin()) {
+            return;
+        }
+
+        if (!current_user_can(self::SETTINGS_CAPABILITY)) {
+            return;
+        }
+
+        if (empty($_POST['mcm_action']) || 'clear_update_cache' !== wp_unslash($_POST['mcm_action'])) {
+            return;
+        }
+
+        check_admin_referer(self::CLEAR_CACHE_ACTION);
+
+        self::flush_update_cache();
+        wp_update_plugins();
+
+        wp_safe_redirect(
+            add_query_arg(
+                array(
+                    'page'              => self::SETTINGS_PAGE,
+                    'mcm_cache_cleared' => '1',
+                ),
+                admin_url('options-general.php')
+            )
+        );
+        exit;
     }
 
     public static function branch_choices(): array
