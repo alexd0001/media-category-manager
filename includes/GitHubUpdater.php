@@ -40,6 +40,7 @@ final class GitHubUpdater
         add_filter('plugins_api', array($this, 'plugins_api'), 10, 3);
         add_filter('upgrader_package_options', array($this, 'filter_upgrader_package_options'));
         add_filter('upgrader_source_selection', array($this, 'normalize_extracted_directory'), 10, 4);
+        add_filter('upgrader_install_package_result', array($this, 'log_install_package_result'), 10, 2);
         add_filter('http_request_args', array($this, 'maybe_add_github_headers'), 10, 2);
     }
 
@@ -67,6 +68,15 @@ final class GitHubUpdater
         if (!$remote || version_compare($remote['version'], $this->current_version, '<=')) {
             return $transient;
         }
+
+        $this->log(
+            'Injecting update response.',
+            array(
+                'current_version' => $this->current_version,
+                'new_version'     => $remote['version'],
+                'package'         => $remote['package'],
+            )
+        );
 
         $transient->response[$this->plugin_basename] = (object) array(
             'slug'        => $this->plugin_slug,
@@ -115,6 +125,15 @@ final class GitHubUpdater
             return $source;
         }
 
+        $this->log(
+            'Normalizing extracted directory.',
+            array(
+                'source'        => $source,
+                'remote_source' => $remote_source,
+                'hook_extra'    => $hook_extra,
+            )
+        );
+
         $source = $this->locate_plugin_source_directory((string) $source);
         $target = trailingslashit(dirname($source)) . $this->plugin_slug;
 
@@ -133,8 +152,24 @@ final class GitHubUpdater
         $renamed = $this->move_source_to_target($source, $target);
 
         if ($renamed) {
+            $this->log(
+                'Moved extracted directory to target.',
+                array(
+                    'source' => $source,
+                    'target' => $target,
+                )
+            );
+
             return $target;
         }
+
+        $this->log(
+            'Failed to move extracted directory to target.',
+            array(
+                'source' => $source,
+                'target' => $target,
+            )
+        );
 
         return new \WP_Error(
             'mcm_update_move_failed',
@@ -150,11 +185,47 @@ final class GitHubUpdater
             return $options;
         }
 
+        $this->log(
+            'Filtering upgrader package options.',
+            array(
+                'options' => $options,
+            )
+        );
+
         if (!empty($options['hook_extra']['temp_backup'])) {
             unset($options['hook_extra']['temp_backup']);
         }
 
         return $options;
+    }
+
+    public function log_install_package_result($result, array $hook_extra)
+    {
+        if (!$this->matches_update_context($hook_extra)) {
+            return $result;
+        }
+
+        if (is_wp_error($result)) {
+            $this->log(
+                'Install package returned WP_Error.',
+                array(
+                    'code'    => $result->get_error_code(),
+                    'message' => $result->get_error_message(),
+                    'data'    => $result->get_error_data(),
+                )
+            );
+
+            return $result;
+        }
+
+        $this->log(
+            'Install package result.',
+            array(
+                'result' => $result,
+            )
+        );
+
+        return $result;
     }
 
     public function maybe_add_github_headers(array $args, string $url): array
@@ -175,6 +246,14 @@ final class GitHubUpdater
         $cached = get_site_transient($cache_key);
 
         if (is_array($cached)) {
+            $this->log(
+                'Using cached remote data.',
+                array(
+                    'cache_key' => $cache_key,
+                    'version'   => $cached['version'] ?? null,
+                )
+            );
+
             return $cached;
         }
 
@@ -205,6 +284,14 @@ final class GitHubUpdater
         );
 
         if (is_wp_error($response) || 200 !== (int) wp_remote_retrieve_response_code($response)) {
+            $this->log(
+                'Failed to fetch remote plugin header.',
+                array(
+                    'url'      => $plugin_header_url,
+                    'response' => is_wp_error($response) ? $response->get_error_message() : wp_remote_retrieve_response_code($response),
+                )
+            );
+
             return null;
         }
 
@@ -235,6 +322,15 @@ final class GitHubUpdater
         );
 
         set_site_transient($cache_key, $data, self::CACHE_TTL);
+
+        $this->log(
+            'Fetched remote plugin header.',
+            array(
+                'version' => $version,
+                'branch'  => $branch,
+                'package' => $data['package'],
+            )
+        );
 
         return $data;
     }
@@ -316,6 +412,7 @@ final class GitHubUpdater
     private function move_source_to_target(string $source, string $target): bool
     {
         if (@rename($source, $target)) {
+            $this->log('Renamed source directory with native rename().', array('source' => $source, 'target' => $target));
             return true;
         }
 
@@ -323,16 +420,40 @@ final class GitHubUpdater
             $result = move_dir($source, $target, true);
 
             if (!is_wp_error($result)) {
+                $this->log('Moved source directory with move_dir().', array('source' => $source, 'target' => $target));
                 return true;
             }
+
+            $this->log(
+                'move_dir() failed.',
+                array(
+                    'source'  => $source,
+                    'target'  => $target,
+                    'code'    => $result->get_error_code(),
+                    'message' => $result->get_error_message(),
+                )
+            );
         }
 
         global $wp_filesystem;
 
         if ($wp_filesystem && method_exists($wp_filesystem, 'move') && $wp_filesystem->move($source, $target, true)) {
+            $this->log('Moved source directory with WP_Filesystem move().', array('source' => $source, 'target' => $target));
             return true;
         }
 
+        $this->log('All directory move strategies failed.', array('source' => $source, 'target' => $target));
+
         return false;
+    }
+
+    private function log(string $message, array $context = array()): void
+    {
+        if (!defined('WP_DEBUG_LOG') || !WP_DEBUG_LOG) {
+            return;
+        }
+
+        $payload = $context ? ' ' . wp_json_encode($context) : '';
+        error_log('[MCM Updater] ' . $message . $payload);
     }
 }
