@@ -45,9 +45,9 @@ final class MediaLibrary
         wp_enqueue_style('mcm-admin', MCM_PLUGIN_URL . 'assets/css/admin.css', array(), MCM_VERSION);
         wp_enqueue_style('mcm-tree', MCM_PLUGIN_URL . 'assets/css/tree.css', array('mcm-admin'), MCM_VERSION);
 
-        wp_enqueue_script('mcm-admin', MCM_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'inline-edit-post'), MCM_VERSION, true);
-        wp_enqueue_script('mcm-tree', MCM_PLUGIN_URL . 'assets/js/tree.js', array('mcm-admin'), MCM_VERSION, true);
-        wp_enqueue_script('mcm-bulk', MCM_PLUGIN_URL . 'assets/js/bulk.js', array('mcm-admin'), MCM_VERSION, true);
+        wp_enqueue_script('mcm-admin', MCM_PLUGIN_URL . 'assets/js/admin.js', array('jquery', 'inline-edit-post'), MCM_VERSION, false);
+        wp_enqueue_script('mcm-tree', MCM_PLUGIN_URL . 'assets/js/tree.js', array('mcm-admin'), MCM_VERSION, false);
+        wp_enqueue_script('mcm-bulk', MCM_PLUGIN_URL . 'assets/js/bulk.js', array('mcm-admin'), MCM_VERSION, false);
 
         wp_localize_script(
             'mcm-admin',
@@ -98,10 +98,7 @@ final class MediaLibrary
             return $query;
         }
 
-        $filter = array(
-            'category_id' => isset($_REQUEST[Settings::QUERY_CATEGORY]) ? absint(wp_unslash($_REQUEST[Settings::QUERY_CATEGORY])) : 0,
-            'view'        => isset($_REQUEST[Settings::QUERY_VIEW]) ? sanitize_key(wp_unslash($_REQUEST[Settings::QUERY_VIEW])) : Settings::VIEW_ALL,
-        );
+        $filter = Helpers::current_filter_from_request($query);
 
         $wp_query = new \WP_Query();
         $this->taxonomies->apply_filter_to_query($wp_query, $filter);

@@ -36,6 +36,69 @@ final class Helpers
         $category_id = isset($_GET[Settings::QUERY_CATEGORY]) ? absint(wp_unslash($_GET[Settings::QUERY_CATEGORY])) : 0;
         $view = isset($_GET[Settings::QUERY_VIEW]) ? sanitize_key(wp_unslash($_GET[Settings::QUERY_VIEW])) : Settings::VIEW_ALL;
 
+        return self::normalize_filter(
+            array(
+                'category_id' => $category_id,
+                'view'        => $view,
+            )
+        );
+    }
+
+    public static function current_filter_from_request(array $query_args = array()): array
+    {
+        $request_query = isset($_REQUEST['query']) && is_array($_REQUEST['query']) ? wp_unslash($_REQUEST['query']) : array();
+        $category_id = 0;
+        $view = Settings::VIEW_ALL;
+
+        if (!empty($query_args[Settings::QUERY_CATEGORY])) {
+            $category_id = absint($query_args[Settings::QUERY_CATEGORY]);
+        } elseif (!empty($request_query[Settings::QUERY_CATEGORY])) {
+            $category_id = absint($request_query[Settings::QUERY_CATEGORY]);
+        } elseif (!empty($_REQUEST[Settings::QUERY_CATEGORY])) {
+            $category_id = absint(wp_unslash($_REQUEST[Settings::QUERY_CATEGORY]));
+        }
+
+        if (!empty($query_args[Settings::QUERY_VIEW])) {
+            $view = sanitize_key($query_args[Settings::QUERY_VIEW]);
+        } elseif (!empty($request_query[Settings::QUERY_VIEW])) {
+            $view = sanitize_key($request_query[Settings::QUERY_VIEW]);
+        } elseif (!empty($_REQUEST[Settings::QUERY_VIEW])) {
+            $view = sanitize_key(wp_unslash($_REQUEST[Settings::QUERY_VIEW]));
+        }
+
+        if (!$category_id && Settings::VIEW_ALL === $view) {
+            $referrer = wp_get_referer();
+
+            if ($referrer) {
+                $parts = wp_parse_url($referrer);
+
+                if (!empty($parts['query'])) {
+                    parse_str($parts['query'], $referrer_query);
+
+                    if (!empty($referrer_query[Settings::QUERY_CATEGORY])) {
+                        $category_id = absint($referrer_query[Settings::QUERY_CATEGORY]);
+                    }
+
+                    if (!empty($referrer_query[Settings::QUERY_VIEW])) {
+                        $view = sanitize_key($referrer_query[Settings::QUERY_VIEW]);
+                    }
+                }
+            }
+        }
+
+        return self::normalize_filter(
+            array(
+                'category_id' => $category_id,
+                'view'        => $view,
+            )
+        );
+    }
+
+    private static function normalize_filter(array $filter): array
+    {
+        $category_id = !empty($filter['category_id']) ? absint($filter['category_id']) : 0;
+        $view = !empty($filter['view']) ? sanitize_key((string) $filter['view']) : Settings::VIEW_ALL;
+
         if (Settings::VIEW_UNCATEGORIZED !== $view) {
             $view = Settings::VIEW_ALL;
         }

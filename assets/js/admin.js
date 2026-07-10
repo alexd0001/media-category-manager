@@ -46,17 +46,52 @@
 
         window.mcmAjaxPatched = true;
 
+        function appendFilterToString(data) {
+            var nextData = data;
+
+            if (window.mcmAdmin.currentFilter.category_id) {
+                if (nextData.indexOf('mcm_category=') === -1) {
+                    nextData += '&mcm_category=' + encodeURIComponent(window.mcmAdmin.currentFilter.category_id);
+                }
+
+                if (nextData.indexOf('query%5Bmcm_category%5D=') === -1 && nextData.indexOf('query[mcm_category]=') === -1) {
+                    nextData += '&query[mcm_category]=' + encodeURIComponent(window.mcmAdmin.currentFilter.category_id);
+                }
+            }
+
+            if (window.mcmAdmin.currentFilter.view) {
+                if (nextData.indexOf('mcm_view=') === -1) {
+                    nextData += '&mcm_view=' + encodeURIComponent(window.mcmAdmin.currentFilter.view);
+                }
+
+                if (nextData.indexOf('query%5Bmcm_view%5D=') === -1 && nextData.indexOf('query[mcm_view]=') === -1) {
+                    nextData += '&query[mcm_view]=' + encodeURIComponent(window.mcmAdmin.currentFilter.view);
+                }
+            }
+
+            return nextData;
+        }
+
         $(document).ajaxSend(function (event, jqxhr, settings) {
             if (!settings || !settings.data || settings.data.indexOf('action=query-attachments') === -1) {
                 return;
             }
 
-            if (window.mcmAdmin.currentFilter.category_id && settings.data.indexOf('mcm_category=') === -1) {
-                settings.data += '&mcm_category=' + encodeURIComponent(window.mcmAdmin.currentFilter.category_id);
+            if (typeof settings.data === 'string') {
+                settings.data = appendFilterToString(settings.data);
+                return;
             }
 
-            if (window.mcmAdmin.currentFilter.view && settings.data.indexOf('mcm_view=') === -1) {
-                settings.data += '&mcm_view=' + encodeURIComponent(window.mcmAdmin.currentFilter.view);
+            if (window.mcmAdmin.currentFilter.category_id) {
+                settings.data.mcm_category = window.mcmAdmin.currentFilter.category_id;
+                settings.data.query = settings.data.query || {};
+                settings.data.query.mcm_category = window.mcmAdmin.currentFilter.category_id;
+            }
+
+            if (window.mcmAdmin.currentFilter.view) {
+                settings.data.mcm_view = window.mcmAdmin.currentFilter.view;
+                settings.data.query = settings.data.query || {};
+                settings.data.query.mcm_view = window.mcmAdmin.currentFilter.view;
             }
         });
     }
